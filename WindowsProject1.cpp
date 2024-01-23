@@ -133,11 +133,16 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 //
 //
 
+int msgIndex = 0;
+
 void addMessage(std::wstring message)
 {
 	//给消息追加时间，以便区分不同的消息
 	SYSTEMTIME st;
 	GetLocalTime(&st);
+	int index = msgIndex++;
+	//message增加序号
+	message= std::to_wstring(index)+L":" + message;
 	message += L" " + std::to_wstring(st.wHour) + L":" + std::to_wstring(st.wMinute) + L":" + std::to_wstring(st.wSecond) + L":" + std::to_wstring(st.wMilliseconds) + L"\n";
 	messagesQueue.push(message);
 	//如果消息数量超过最大值，则删除最早的消息
@@ -150,6 +155,28 @@ void cleanMessage()
 	// 清空消息队列
 	std::queue<std::wstring> empty;
 	std::swap(messagesQueue, empty);
+}
+
+void findWndSendClickEvent() 
+{
+	// 定义点坐标
+	POINT point;
+	point.x = 500; // x坐标
+	point.y = 500; // y坐标
+
+	// 获取包含该点的窗口句柄
+	HWND hwnd = WindowFromPoint(point);
+
+	if (hwnd != NULL) {
+		// 向该窗口发送鼠标左键按下消息
+		SendMessage(hwnd, WM_LBUTTONDOWN, MK_LBUTTON, MAKELPARAM(point.x, point.y));
+		Sleep(100); // 等待100毫秒
+		// 向该窗口发送鼠标左键抬起消息
+		SendMessage(hwnd, WM_LBUTTONUP, MK_LBUTTON, MAKELPARAM(point.x, point.y));
+	}
+	else {
+		MessageBoxA(NULL, "未找到窗口", "提示", MB_OK);
+	}
 }
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -170,6 +197,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		case IDM_EXIT:
 			DestroyWindow(hWnd);
+			break;
+		case ID_32771:
+			findWndSendClickEvent();
 			break;
 		default:
 			return DefWindowProc(hWnd, message, wParam, lParam);
